@@ -1,0 +1,5 @@
+epoch,settlement_event_count,escrow_id_min,escrow_id_max,block_height_min,block_height_max,total_payout_sum,remainder_sum,settlers,versions
+269,0,,,,,0,0,,
+270,0,,,,,0,0,,
+271,0,,,,,0,0,,
+272,48,1939,1986,4213209,4213251,1945485000,238054515000,gonka10fynmy2npvdvew0vj2288gz8ljfvmjs35lat8n,v1

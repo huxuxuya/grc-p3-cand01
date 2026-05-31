@@ -1,0 +1,21 @@
+{
+  "current_epoch": 281,
+  "epochs": [
+    279
+  ],
+  "summary": [
+    {
+      "devshard_completed_validations_sum": 0,
+      "devshard_cost_sum": 0,
+      "devshard_escrow_count_sum": 0,
+      "devshard_found_count": 0,
+      "devshard_invalid_sum": 0,
+      "devshard_missed_sum": 0,
+      "devshard_not_found_count": 57,
+      "devshard_required_validations_sum": 0,
+      "epoch": 279,
+      "participant_count": 57,
+      "participant_source": "performance_summary"
+    }
+  ]
+}

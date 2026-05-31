@@ -1,0 +1,100 @@
+{
+  "decoded_tx_rows": 50008,
+  "input_length": {
+    "avg": 45402.62302049077,
+    "gt_10000": 8846,
+    "gt_100000": 2734,
+    "gt_250000": 1044,
+    "gt_50000": 3713,
+    "gt_500000": 149,
+    "max": 853165,
+    "min": 59
+  },
+  "kind_counts": {
+    "confirm_start": 12747,
+    "finalize_round": 63,
+    "finish_inference": 11180,
+    "reveal_seed": 433,
+    "start_inference": 19765,
+    "timeout_inference": 857,
+    "validation": 4240,
+    "validation_vote": 723
+  },
+  "starts": 19765,
+  "timeout_accept_sum": 3742,
+  "timeout_reasons": {
+    "TIMEOUT_REASON_EXECUTION": 812,
+    "TIMEOUT_REASON_REFUSED": 45
+  },
+  "timeout_votes_sum": 3742,
+  "timeouts": 857,
+  "top_validation_slots_false": [
+    [
+      "0",
+      577
+    ],
+    [
+      "1",
+      520
+    ],
+    [
+      "3",
+      421
+    ],
+    [
+      "2",
+      338
+    ],
+    [
+      "5",
+      307
+    ],
+    [
+      "4",
+      248
+    ],
+    [
+      "6",
+      186
+    ],
+    [
+      "11",
+      184
+    ],
+    [
+      "10",
+      134
+    ],
+    [
+      "8",
+      133
+    ],
+    [
+      "13",
+      130
+    ],
+    [
+      "7",
+      125
+    ],
+    [
+      "9",
+      119
+    ],
+    [
+      "12",
+      102
+    ],
+    [
+      "14",
+      75
+    ],
+    [
+      "15",
+      50
+    ]
+  ],
+  "validation_txs": 4963,
+  "validation_valid_false": 3649,
+  "validation_valid_true": 1314
+}

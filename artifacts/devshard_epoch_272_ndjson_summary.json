@@ -1,0 +1,127 @@
+{
+  "case_addresses": [
+    "gonka10079cnl3nuh2k82mhkm04dj0slhtw9kmjewwau",
+    "gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv",
+    "gonka1007g0ut3u4wjkay9hegqfev4pj90qgexwskmcw",
+    "gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5",
+    "gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s",
+    "gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n",
+    "gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4"
+  ],
+  "case_executor_row_count": 263,
+  "case_participant_activity": [
+    {
+      "case_address": true,
+      "executed": 63,
+      "execution_cost": 9983430,
+      "is_vote_false": 23,
+      "is_vote_true": 0,
+      "participant": "gonka10079cnl3nuh2k82mhkm04dj0slhtw9kmjewwau",
+      "valid_false": 20,
+      "valid_true": 3,
+      "validation_rows": 23
+    },
+    {
+      "case_address": true,
+      "executed": 62,
+      "execution_cost": 6314670,
+      "is_vote_false": 29,
+      "is_vote_true": 0,
+      "participant": "gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv",
+      "valid_false": 26,
+      "valid_true": 3,
+      "validation_rows": 29
+    },
+    {
+      "case_address": true,
+      "executed": 46,
+      "execution_cost": 8196600,
+      "is_vote_false": 34,
+      "is_vote_true": 0,
+      "participant": "gonka1007g0ut3u4wjkay9hegqfev4pj90qgexwskmcw",
+      "valid_false": 34,
+      "valid_true": 0,
+      "validation_rows": 34
+    },
+    {
+      "case_address": true,
+      "executed": 21,
+      "execution_cost": 2035910,
+      "is_vote_false": 11,
+      "is_vote_true": 0,
+      "participant": "gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5",
+      "valid_false": 11,
+      "valid_true": 0,
+      "validation_rows": 11
+    },
+    {
+      "case_address": true,
+      "executed": 0,
+      "execution_cost": 0,
+      "is_vote_false": 0,
+      "is_vote_true": 0,
+      "participant": "gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s",
+      "valid_false": 0,
+      "valid_true": 0,
+      "validation_rows": 0
+    },
+    {
+      "case_address": true,
+      "executed": 15,
+      "execution_cost": 1921170,
+      "is_vote_false": 11,
+      "is_vote_true": 0,
+      "participant": "gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n",
+      "valid_false": 8,
+      "valid_true": 3,
+      "validation_rows": 11
+    },
+    {
+      "case_address": true,
+      "executed": 56,
+      "execution_cost": 4868520,
+      "is_vote_false": 22,
+      "is_vote_true": 0,
+      "participant": "gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4",
+      "valid_false": 18,
+      "valid_true": 4,
+      "validation_rows": 22
+    }
+  ],
+  "case_validation_row_count": 130,
+  "diff_rows": 21693,
+  "diff_tx_count": 50008,
+  "diff_tx_kind_counts": {
+    "confirm_start": 12747,
+    "finalize_round": 63,
+    "finish_inference": 11180,
+    "reveal_seed": 433,
+    "start_inference": 19765,
+    "timeout_inference": 857,
+    "validation": 4240,
+    "validation_vote": 723
+  },
+  "epoch": 272,
+  "escrow_count_from_inferences": 63,
+  "inference_count": 19764,
+  "input_length_claimed": {
+    "avg": 45383.24423193686,
+    "count": 19764,
+    "max": 853165,
+    "min": 0
+  },
+  "model_counts": {
+    "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8": 8553,
+    "moonshotai/Kimi-K2.6": 11211
+  },
+  "settlement_event_count": 63,
+  "status_counts": {
+    "CONFIRMED": 756,
+    "FINISHED": 7271,
+    "INVALIDATED": 2763,
+    "STARTED": 6976,
+    "TIMED_OUT": 856,
+    "VALIDATED": 1142
+  },
+  "validation_rows": 4959
+}

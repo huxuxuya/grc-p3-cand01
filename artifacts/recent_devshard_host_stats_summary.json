@@ -1,0 +1,35 @@
+{
+  "current_epoch": 281,
+  "epochs": [
+    280,
+    281
+  ],
+  "summary": [
+    {
+      "devshard_completed_validations_sum": 10051,
+      "devshard_cost_sum": 186452690,
+      "devshard_escrow_count_sum": 61,
+      "devshard_found_count": 30,
+      "devshard_invalid_sum": 293,
+      "devshard_missed_sum": 255,
+      "devshard_not_found_count": 24,
+      "devshard_required_validations_sum": 11286,
+      "epoch": 280,
+      "participant_count": 54,
+      "participant_source": "performance_summary"
+    },
+    {
+      "devshard_completed_validations_sum": 0,
+      "devshard_cost_sum": 0,
+      "devshard_escrow_count_sum": 0,
+      "devshard_found_count": 0,
+      "devshard_invalid_sum": 0,
+      "devshard_missed_sum": 0,
+      "devshard_not_found_count": 59,
+      "devshard_required_validations_sum": 0,
+      "epoch": 281,
+      "participant_count": 59,
+      "participant_source": "epoch_group_data"
+    }
+  ]
+}

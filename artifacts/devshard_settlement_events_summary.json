@@ -1,0 +1,52 @@
+{
+  "summary": [
+    {
+      "block_height_max": "",
+      "block_height_min": "",
+      "epoch": 269,
+      "escrow_id_max": "",
+      "escrow_id_min": "",
+      "remainder_sum": 0,
+      "settlement_event_count": 0,
+      "settlers": "",
+      "total_payout_sum": 0,
+      "versions": ""
+    },
+    {
+      "block_height_max": "",
+      "block_height_min": "",
+      "epoch": 270,
+      "escrow_id_max": "",
+      "escrow_id_min": "",
+      "remainder_sum": 0,
+      "settlement_event_count": 0,
+      "settlers": "",
+      "total_payout_sum": 0,
+      "versions": ""
+    },
+    {
+      "block_height_max": "",
+      "block_height_min": "",
+      "epoch": 271,
+      "escrow_id_max": "",
+      "escrow_id_min": "",
+      "remainder_sum": 0,
+      "settlement_event_count": 0,
+      "settlers": "",
+      "total_payout_sum": 0,
+      "versions": ""
+    },
+    {
+      "block_height_max": 4213251,
+      "block_height_min": 4213209,
+      "epoch": 272,
+      "escrow_id_max": 1986,
+      "escrow_id_min": 1939,
+      "remainder_sum": 238054515000,
+      "settlement_event_count": 48,
+      "settlers": "gonka10fynmy2npvdvew0vj2288gz8ljfvmjs35lat8n",
+      "total_payout_sum": 1945485000,
+      "versions": "v1"
+    }
+  ]
+}

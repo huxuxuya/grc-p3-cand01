@@ -1,0 +1,13 @@
+{
+  "current_epoch": 281,
+  "found_count": 0,
+  "likely_pruned_count": 38,
+  "not_found_count": 38,
+  "notes": [
+    "found=false means no retained on-chain devshard host stats for that epoch/participant at query time",
+    "epochs older than current_epoch - 2 are expected to be pruned by the devshard pruner"
+  ],
+  "retention_threshold_epochs": 2,
+  "target_count": 38,
+  "targets_csv": "artifacts/zero_reward_269_272.csv"
+}

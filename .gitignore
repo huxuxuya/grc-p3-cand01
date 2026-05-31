@@ -1,0 +1,14 @@
+# Local OS/editor noise
+.DS_Store
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Large local investigation data
+data/
+*.ndjson
+artifacts/devshard_epoch_272_decoded_txs.csv
+
+# Generated raw chain/devshard exports can be reproduced locally.
+data/raw/

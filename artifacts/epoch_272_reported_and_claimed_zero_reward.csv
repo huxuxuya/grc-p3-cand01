@@ -1,0 +1,8 @@
+epoch,participant_id,reported_address,claimed,inference_count,missed_requests,miss_rate,earned_coins,rewarded_coins,validation_weight,total_epoch_weight,fixed_epoch_reward,baseline_reward_pre_downtime,preliminary_exposure,zero_reward,zero_reward_claimed,needs_root_cause_review
+272,gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4,True,True,309,90,0.22556391,5262646,0,25462,823183,283986676469990,8784035574445,8784035574445,True,True,True
+272,gonka10079cnl3nuh2k82mhkm04dj0slhtw9kmjewwau,True,True,308,59,0.16076294,10348054,0,17297,823183,283986676469990,5967224229486,5967224229486,True,True,True
+272,gonka1007g0ut3u4wjkay9hegqfev4pj90qgexwskmcw,True,True,416,72,0.14754098,7795716,0,20981,823183,283986676469990,7238152949000,7238152949000,True,True,True
+272,gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv,True,True,406,60,0.12875536,6778606,0,21124,823183,283986676469990,7287485958471,7287485958471,True,True,True
+272,gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5,True,True,185,50,0.21276596,2268162,0,11782,823183,283986676469990,4064625997098,4064625997098,True,True,True
+272,gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n,True,True,63,35,0.35714286,2019169,0,6236,823183,283986676469990,2151333196223,2151333196223,True,True,True
+272,gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s,False,True,68,23,0.25274725,89061,0,397,823183,283986676469990,136959473845,136959473845,True,True,True
