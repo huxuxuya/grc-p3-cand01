@@ -54,6 +54,12 @@ The case is sufficiently investigated for a practical GRC decision:
 | The issue appears fixed / not repeating | Supported by available data. `v0.2.13` changed the relevant devshard and settlement areas, and later checked devshard data does not show the same six-address zero-reward incident pattern. | [PR #1143](https://github.com/gonka-ai/gonka/pull/1143), `artifacts/recent_devshard_host_stats_summary.json` |
 | 100% replay proof is available | No. Current on-chain retention no longer contains epoch 272 host stats or full devshard settlement payloads. | `artifacts/devshard_host_stats_summary.json`, `sources/devshard-investigation.md` |
 
+Important: the audit conclusion is based on devshard evidence, not only on a
+reward-table comparison. The investigation decoded local devshard exports,
+linked inference and validation rows by `escrow_id + inference_id`, checked
+settlement events, and then compared those findings with the chain reward
+outcome.
+
 ### Plain-Language Incident Narrative
 
 In simple terms: these participants were not simply offline or absent. They

@@ -11,7 +11,7 @@
 | **Mitigation / fix** | Likely related fix area: `v0.2.13`, applied on-chain at height `4267300` on `2026-05-26 14:39:41 UTC`; [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) merged at `2026-05-26 18:59:21 UTC`. Exact one-to-one proof is limited by pruned epoch 272 data. |
 | **Compensation overlap** | No known overlap. This calculation covers fixed `rewarded_coins` exposure only. |
 | **Current decision** | GRC should decide whether to approve compensation for the six confirmed addresses using the chain-like estimate below. |
-| **Review focus** | Validator: `@mikenosov`. Check devshard evidence, `chain_effective_weight`, GNK conversion, and that the post-272 pattern did not recur. |
+| **Review focus** | Validator: `@mikenosov`. Re-check the devshard-based proof first: exports, decoded txs, linked causality rows, `chain_effective_weight`, GNK conversion, and post-272 non-recurrence. |
 
 ## Summary
 
@@ -25,6 +25,10 @@ The evidence fits a devshard / validation-path issue better than ordinary
 operator downtime. The participants appear to have performed honest work; their
 own executed inferences do not show direct timeout txs in the decoded devshard
 link.
+
+This conclusion is based on devshard data, not only on the chain reward table:
+local devshard exports were decoded, linked by `escrow_id + inference_id`, and
+cross-checked against settlement events and per-address activity artifacts.
 
 ## Compensation Estimate
 
