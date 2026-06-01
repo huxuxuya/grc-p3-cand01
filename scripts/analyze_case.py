@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import urllib.parse
 from decimal import Decimal, getcontext
 from pathlib import Path
 
@@ -19,25 +20,6 @@ REPORTED_ADDRESSES = {
     "gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv",
     "gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5",
     "gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n",
-}
-
-# Chain-like expected reward weights for epoch 272 zero-reward case rows.
-#
-# These are effective settlement weights after normal pre-downtime reward
-# adjustments. They are used to estimate what the chain would have paid if the
-# high miss-rate / downtime check had not zeroed the participant's reward.
-#
-# For gonka1wt8..., the value 21271 is independently reconciled to
-# 7,338.198912262 GNK:
-# floor(21271 * 283986676469990 / 823183).
-EPOCH_272_EFFECTIVE_WEIGHT_OVERRIDES = {
-    "gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4": 21271,
-    "gonka10079cnl3nuh2k82mhkm04dj0slhtw9kmjewwau": 15146,
-    "gonka1007g0ut3u4wjkay9hegqfev4pj90qgexwskmcw": 18750,
-    "gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv": 18899,
-    "gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5": 10661,
-    "gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n": 4307,
-    "gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s": 201,
 }
 
 
@@ -60,20 +42,146 @@ def fixed_epoch_reward(params: dict, epoch: int) -> int:
     return int(initial * (decay.exp() ** epochs_since_genesis))
 
 
-def load_weights(raw_dir: Path, epoch: int) -> tuple[dict[str, int], int]:
+def calculate_power_capped_weights(weights: dict[str, int]) -> tuple[dict[str, int], bool]:
+    """Match chain ApplyPowerCappingForWeights for settlement effective weights."""
+    if len(weights) <= 1:
+        return dict(weights), False
+
+    participant_count = len(weights)
+    max_percentage = Decimal("0.30")
+    if participant_count == 2:
+        max_percentage = Decimal("0.50")
+    elif participant_count == 3:
+        max_percentage = Decimal("0.40")
+
+    sorted_weights = sorted(weights.items(), key=lambda item: item[1])
+    cap = None
+    sum_previous = 0
+    for index, (_, current_weight) in enumerate(sorted_weights):
+        remaining = participant_count - index
+        weighted_total = sum_previous + current_weight * remaining
+        threshold = max_percentage * Decimal(weighted_total)
+        if Decimal(current_weight) > threshold:
+            numerator = max_percentage * Decimal(sum_previous)
+            denominator = Decimal(1) - max_percentage * Decimal(remaining)
+            if denominator <= 0:
+                cap = current_weight
+            else:
+                cap = int(numerator / denominator)
+            break
+        sum_previous += current_weight
+
+    if cap is None:
+        return dict(weights), False
+
+    return {participant: min(weight, cap) for participant, weight in weights.items()}, True
+
+
+def model_group_path(raw_dir: Path, epoch: int, model_id: str) -> Path:
+    encoded = urllib.parse.quote(model_id, safe="")
+    return raw_dir / f"epoch_{epoch}_group_data_model_{encoded}.json"
+
+
+def model_coefficients(params: dict) -> dict[str, Decimal]:
+    models = params["params"].get("poc_params", {}).get("models", [])
+    return {
+        model["model_id"]: dec_from_param(model["weight_scale_factor"])
+        for model in models
+        if model.get("model_id") and model.get("weight_scale_factor")
+    }
+
+
+def load_model_subgroups(raw_dir: Path, epoch: int, parent_group: dict) -> dict[str, dict]:
+    subgroups = {}
+    for model_id in parent_group.get("sub_group_models", []):
+        path = model_group_path(raw_dir, epoch, model_id)
+        if not path.exists():
+            raise FileNotFoundError(
+                f"missing model subgroup data for epoch {epoch}, model {model_id}: {path}. "
+                "Run scripts/fetch_case_data.py to fetch chain subgroup epoch_group_data."
+            )
+        payload = read_json(path)
+        group = payload["epoch_group_data"]
+        if group.get("model_id") != model_id:
+            raise ValueError(
+                f"model subgroup file {path} contains model_id={group.get('model_id')!r}, "
+                f"expected {model_id!r}"
+            )
+        subgroups[model_id] = group
+    return subgroups
+
+
+def calculate_raw_totals(
+    parent_group: dict, subgroups: dict[str, dict], coefficients: dict[str, Decimal]
+) -> dict[str, int]:
+    raw_totals = {
+        row["member_address"]: 0
+        for row in parent_group.get("validation_weights", [])
+    }
+    for model_id, group in subgroups.items():
+        coefficient = coefficients.get(model_id, Decimal(1))
+        for row in group.get("validation_weights", []):
+            raw_model = sum(
+                int(node.get("poc_weight", 0))
+                for node in row.get("ml_nodes", [])
+                if node is not None
+            )
+            raw_totals[row["member_address"]] = (
+                raw_totals.get(row["member_address"], 0)
+                + int(coefficient * Decimal(raw_model))
+            )
+    return raw_totals
+
+
+def load_weights(
+    raw_dir: Path, params: dict, epoch: int
+) -> tuple[dict[str, dict[str, int]], int, bool]:
     payload = read_json(raw_dir / f"epoch_{epoch}_group_data.json")
     group = payload["epoch_group_data"]
-    weights = {
-        row["member_address"]: int(row["weight"])
-        for row in group.get("validation_weights", [])
-    }
-    total_weight = int(group.get("total_weight") or sum(weights.values()))
-    return weights, total_weight
+    subgroups = load_model_subgroups(raw_dir, epoch, group)
+    raw_totals = calculate_raw_totals(group, subgroups, model_coefficients(params))
+
+    rows = {}
+    uncapped_effective_weights = {}
+    full_weight_sum = 0
+    for row in group.get("validation_weights", []):
+        addr = row["member_address"]
+        full_weight = max(int(row["weight"]), 0)
+        confirmation_weight = max(int(row.get("confirmation_weight", 0)), 0)
+        raw_total = raw_totals.get(addr, 0)
+        effective_weight = confirmation_weight
+        if raw_total > 0 and full_weight < raw_total:
+            effective_weight = (confirmation_weight * full_weight) // raw_total
+        if effective_weight > full_weight:
+            effective_weight = full_weight
+
+        rows[addr] = {
+            "full_weight": full_weight,
+            "confirmation_weight": confirmation_weight,
+            "raw_total": raw_total,
+            "chain_effective_weight_uncapped": effective_weight,
+            "chain_effective_weight": effective_weight,
+        }
+        uncapped_effective_weights[addr] = effective_weight
+        full_weight_sum += full_weight
+
+    effective_weights, was_power_capped = calculate_power_capped_weights(
+        uncapped_effective_weights
+    )
+    for addr, effective_weight in effective_weights.items():
+        rows[addr]["chain_effective_weight"] = effective_weight
+
+    total_weight = int(group.get("total_weight") or full_weight_sum)
+    if total_weight != full_weight_sum:
+        raise ValueError(
+            f"epoch {epoch} total_weight={total_weight} differs from parent full weight sum={full_weight_sum}"
+        )
+    return rows, total_weight, was_power_capped
 
 
 def analyze_epoch(raw_dir: Path, params: dict, epoch: int) -> tuple[dict, list[dict]]:
     summary = read_json(raw_dir / f"epoch_{epoch}_performance_summary.json")
-    weights, total_weight = load_weights(raw_dir, epoch)
+    weights, total_weight, was_power_capped = load_weights(raw_dir, params, epoch)
     fixed_reward = fixed_epoch_reward(params, epoch)
     rows = []
 
@@ -87,18 +195,25 @@ def analyze_epoch(raw_dir: Path, params: dict, epoch: int) -> tuple[dict, list[d
         miss_rate = None
         if total_requests:
             miss_rate = missed_requests / total_requests
-        weight = weights.get(addr, 0)
-        baseline_reward = 0
-        if total_weight > 0 and weight > 0:
-            baseline_reward = (weight * fixed_reward) // total_weight
-        chain_effective_weight = None
-        if epoch == 272:
-            chain_effective_weight = EPOCH_272_EFFECTIVE_WEIGHT_OVERRIDES.get(addr)
-        chain_expected_reward = baseline_reward
-        if chain_effective_weight is not None and total_weight > 0:
-            chain_expected_reward = (chain_effective_weight * fixed_reward) // total_weight
-        preliminary_exposure = max(chain_expected_reward - rewarded_coins, 0)
-        raw_weight_exposure = max(baseline_reward - rewarded_coins, 0)
+        weight = weights.get(
+            addr,
+            {
+                "full_weight": 0,
+                "confirmation_weight": 0,
+                "raw_total": 0,
+                "chain_effective_weight_uncapped": 0,
+                "chain_effective_weight": 0,
+            },
+        )
+        full_weight = weight["full_weight"]
+        confirmation_weight = weight["confirmation_weight"]
+        raw_total = weight["raw_total"]
+        uncapped_effective_weight = weight["chain_effective_weight_uncapped"]
+        effective_weight = weight["chain_effective_weight"]
+        expected_reward = 0
+        if total_weight > 0 and effective_weight > 0:
+            expected_reward = (effective_weight * fixed_reward) // total_weight
+        preliminary_exposure = max(expected_reward - rewarded_coins, 0)
         zero_reward = rewarded_coins == 0
         claimed = bool(item["claimed"])
 
@@ -113,15 +228,15 @@ def analyze_epoch(raw_dir: Path, params: dict, epoch: int) -> tuple[dict, list[d
                 "miss_rate": miss_rate,
                 "earned_coins": earned_coins,
                 "rewarded_coins": rewarded_coins,
-                "validation_weight": weight,
+                "validation_weight": full_weight,
+                "full_weight": full_weight,
+                "confirmation_weight": confirmation_weight,
+                "raw_total": raw_total,
+                "chain_effective_weight_uncapped": uncapped_effective_weight,
+                "chain_effective_weight": effective_weight,
                 "total_epoch_weight": total_weight,
                 "fixed_epoch_reward": fixed_reward,
-                "baseline_reward_pre_downtime": baseline_reward,
-                "chain_effective_weight": (
-                    chain_effective_weight if chain_effective_weight is not None else weight
-                ),
-                "chain_expected_reward_pre_downtime": chain_expected_reward,
-                "raw_weight_exposure": raw_weight_exposure,
+                "expected_reward_pre_downtime": expected_reward,
                 "preliminary_exposure": preliminary_exposure,
                 "zero_reward": zero_reward,
                 "zero_reward_claimed": zero_reward and claimed,
@@ -148,17 +263,12 @@ def analyze_epoch(raw_dir: Path, params: dict, epoch: int) -> tuple[dict, list[d
         "total_rewarded_coins": sum(row["rewarded_coins"] for row in rows),
         "fixed_epoch_reward": fixed_reward,
         "total_epoch_weight": total_weight,
+        "power_capping_applied": was_power_capped,
         "reported_preliminary_exposure": sum(
             row["preliminary_exposure"] for row in rows if row["reported_address"]
         ),
         "claimed_zero_reward_preliminary_exposure": sum(
             row["preliminary_exposure"] for row in rows if row["zero_reward_claimed"]
-        ),
-        "reported_raw_weight_exposure": sum(
-            row["raw_weight_exposure"] for row in rows if row["reported_address"]
-        ),
-        "claimed_zero_reward_raw_weight_exposure": sum(
-            row["raw_weight_exposure"] for row in rows if row["zero_reward_claimed"]
         ),
     }
     return aggregate, rows
@@ -216,12 +326,14 @@ def main() -> int:
         "earned_coins",
         "rewarded_coins",
         "validation_weight",
+        "full_weight",
+        "confirmation_weight",
+        "raw_total",
+        "chain_effective_weight_uncapped",
+        "chain_effective_weight",
         "total_epoch_weight",
         "fixed_epoch_reward",
-        "baseline_reward_pre_downtime",
-        "chain_effective_weight",
-        "chain_expected_reward_pre_downtime",
-        "raw_weight_exposure",
+        "expected_reward_pre_downtime",
         "preliminary_exposure",
         "zero_reward",
         "zero_reward_claimed",
@@ -247,10 +359,9 @@ def main() -> int:
             "total_rewarded_coins",
             "fixed_epoch_reward",
             "total_epoch_weight",
+            "power_capping_applied",
             "reported_preliminary_exposure",
             "claimed_zero_reward_preliminary_exposure",
-            "reported_raw_weight_exposure",
-            "claimed_zero_reward_raw_weight_exposure",
         ],
     )
 
@@ -262,8 +373,10 @@ def main() -> int:
         "epoch_272_reported_and_claimed_zero_reward": interesting_rows,
         "notes": [
             "preliminary_exposure is not approved compensation",
-            "preliminary_exposure uses chain-like expected reward weights where available",
-            "raw_weight_exposure is retained as an upper technical reference",
+            "chain_effective_weight is computed from release/v0.2.12 chain settlement logic before downtime",
+            "full_weight and confirmation_weight come from parent epoch_group_data",
+            "raw_total comes from model subgroup epoch_group_data ML node poc_weight values with model weight_scale_factor",
+            "no manual participant weight overrides are used",
             "root cause requires retained devshard proof/stat data",
         ],
     }
