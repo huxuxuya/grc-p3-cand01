@@ -84,32 +84,32 @@ Use UTC times. Original UTC+03 timestamps are retained in
 | Affected reward stream(s) | Fixed `rewarded_coins`; `earned_coins` / `work_coins` were still present for the reported six. |
 | Affected model / subgroup, if relevant | Epoch 272 group models from chain data: `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8`, `moonshotai/Kimi-K2.6`. |
 | Affected rounds, CPoCs, or epochs | Epochs 269-272 reviewed; main reported incident is epoch 272. |
-| Baseline state to compare against | Pre-downtime fixed reward share: `validation_weight / total_epoch_weight * fixed_epoch_reward`. This is a technical exposure estimate, not an approved payout formula. |
+| Baseline state to compare against | Chain-like pre-downtime reward: `chain_effective_weight / total_epoch_weight * fixed_epoch_reward`. Raw `validation_weight` exposure is retained only as an upper technical reference. |
 | Estimated affected count | Epoch 272: 6 reported addresses; 7 `claimed=true` zero-reward addresses; 14 total zero-reward outcomes. |
-| Estimated restitution exposure | Reported six: `35,492.857904723 GNK`. All epoch 272 claimed zero-reward rows: `35,629.817378568 GNK`. These are technical estimates, not approved payouts. |
+| Estimated restitution exposure | Reported six: `30,715.490665898 GNK`. All epoch 272 claimed zero-reward rows: `30,784.832868021 GNK`. These are chain-like technical estimates, not approved payouts. |
 
 Display note: GNK values use `1 GNK = 1,000,000,000` chain integer units.
 
 Epoch-level reproduction:
 
-| Epoch | Participants | Zero reward | Claimed zero reward | Reported addresses present | Reported zero reward | Total inference | Missed requests | Total rewarded GNK | Reported preliminary exposure GNK |
+| Epoch | Participants | Zero reward | Claimed zero reward | Reported addresses present | Reported zero reward | Total inference | Missed requests | Total rewarded GNK | Reported chain-like exposure GNK |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 269 | 58 | 12 | 1 | 4 | 0 | 72438 | 1334 | 228,007.006768336 | 210.552884273 |
 | 270 | 49 | 5 | 0 | 5 | 0 | 327454 | 863 | 265,454.382163070 | 1,993.651514223 |
 | 271 | 49 | 7 | 0 | 5 | 0 | 123406 | 2822 | 236,273.187242554 | 9,340.681041098 |
-| 272 | 50 | 14 | 7 | 6 | 6 | 20405 | 855 | 170,919.558595844 | 35,492.857904723 |
+| 272 | 50 | 14 | 7 | 6 | 6 | 20405 | 855 | 170,919.558595844 | 30,715.490665898 |
 
 Epoch 272 reported and additional claimed zero-reward rows:
 
-| Address | Reported six | Inference | Missed | Miss rate | Earned coins | Rewarded GNK | Validation weight | Preliminary exposure GNK |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4` | yes | 309 | 90 | 22.56% | 5262646 | 0 | 25462 | 8,784.035574445 |
-| `gonka10079cnl3nuh2k82mhkm04dj0slhtw9kmjewwau` | yes | 308 | 59 | 16.08% | 10348054 | 0 | 17297 | 5,967.224229486 |
-| `gonka1007g0ut3u4wjkay9hegqfev4pj90qgexwskmcw` | yes | 416 | 72 | 14.75% | 7795716 | 0 | 20981 | 7,238.152949000 |
-| `gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv` | yes | 406 | 60 | 12.88% | 6778606 | 0 | 21124 | 7,287.485958471 |
-| `gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5` | yes | 185 | 50 | 21.28% | 2268162 | 0 | 11782 | 4,064.625997098 |
-| `gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n` | yes | 63 | 35 | 35.71% | 2019169 | 0 | 6236 | 2,151.333196223 |
-| `gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s` | no | 68 | 23 | 25.27% | 89061 | 0 | 397 | 136.959473845 |
+| Address | Reported six | Inference | Missed | Miss rate | Earned coins | Rewarded GNK | Effective weight | Chain-like exposure GNK | Raw-weight reference GNK |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4` | yes | 309 | 90 | 22.56% | 5262646 | 0 | 21271 | 7,338.198912262 | 8,784.035574445 |
+| `gonka10079cnl3nuh2k82mhkm04dj0slhtw9kmjewwau` | yes | 308 | 59 | 16.08% | 10348054 | 0 | 15146 | 5,225.159170943 | 5,967.224229486 |
+| `gonka1007g0ut3u4wjkay9hegqfev4pj90qgexwskmcw` | yes | 416 | 72 | 14.75% | 7795716 | 0 | 18750 | 6,468.489004039 | 7,238.152949000 |
+| `gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv` | yes | 406 | 60 | 12.88% | 6778606 | 0 | 18899 | 6,519.891929991 | 7,287.485958471 |
+| `gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5` | yes | 185 | 50 | 21.28% | 2268162 | 0 | 10661 | 3,677.896601176 | 4,064.625997098 |
+| `gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n` | yes | 63 | 35 | 35.71% | 2019169 | 0 | 4307 | 1,485.855047487 | 2,151.333196223 |
+| `gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s` | no | 68 | 23 | 25.27% | 89061 | 0 | 201 | 69.342202123 | 136.959473845 |
 
 ## 6. Eligibility Draft
 
@@ -152,6 +152,7 @@ root cause is established.
 | Existing scripts, CSVs, or JSON files | `scripts/`, `data/raw/`, `artifacts/` | Added. |
 | Retained devshard proof/stat data | `scripts/fetch_devshard_stats.py`; `artifacts/devshard_host_stats_audit.csv`; `data/raw/devshard/` | Queried for zero-reward rows. No epoch 269-272 host stats were retained on-chain at query time. Required external archives remain missing. |
 | Devshard settlement events | `data/devshard_settlements.ndjson`; `artifacts/devshard_settlement_events_summary.csv` | 48 settlement events found in epoch 272 block range, but they are event-level records without `host_stats`, signatures, or full tx payloads. |
+| Effective settlement weights | `artifacts/epoch_272_reported_and_claimed_zero_reward.csv` column `chain_effective_weight` | Used for chain-like compensation estimates. Must be independently verified from devshard / settlement data before approval. |
 
 ### Devshard Retention Finding
 
@@ -201,10 +202,10 @@ exact protocol-liability conclusion still requires policy and root-cause review.
 
 | Question | Answer |
 | --- | --- |
-| What baseline will be used? | Technical exposure baseline: pre-downtime fixed reward share using validation weight and total epoch weight. |
-| Why is that baseline fair? | It estimates the fixed reward share before the high miss-rate outcome zeroed the participant's reward. It is useful for investigation, but not enough for approval. |
+| What baseline will be used? | Chain-like expected fixed reward before the high miss-rate zeroing. |
+| Why is that baseline fair? | It estimates what the chain would have paid if normal pre-downtime effective-weight logic applied and only the abnormal zeroing were removed. |
 | What denominator will be used? | `total_epoch_weight` from `epoch_group_data`; epoch 272 value is `823183`. |
-| Should actual rewards already received be subtracted? | Yes for exposure calculations: `max(baseline_reward_pre_downtime - rewarded_coins, 0)`. For the reported six, `rewarded_coins = 0`. |
+| Should actual rewards already received be subtracted? | Yes: `max(chain_expected_reward_pre_downtime - rewarded_coins, 0)`. For the reported six, `rewarded_coins = 0`. |
 | Should partial payouts stay eligible? | Policy decision required. This repo does not approve payouts. |
 | Should downtime, misses, invalidation, or slashing affect eligibility? | Yes, they must be analyzed. The immediate zero-reward path is high miss rate, but root cause must decide whether it is compensable. |
 | Should the calculation include only fixed rewards or other losses too? | Current calculation covers fixed `rewarded_coins` exposure only. `earned_coins` are reported separately. |
@@ -213,9 +214,19 @@ Formula draft:
 
 ```text
 fixed_epoch_reward = floor(initial_epoch_reward * exp(decay_rate) ^ (epoch - genesis_epoch))
-baseline_reward_pre_downtime = floor(validation_weight * fixed_epoch_reward / total_epoch_weight)
-preliminary_exposure = max(baseline_reward_pre_downtime - rewarded_coins, 0)
+chain_expected_reward_pre_downtime = floor(chain_effective_weight * fixed_epoch_reward / total_epoch_weight)
+preliminary_exposure = max(chain_expected_reward_pre_downtime - rewarded_coins, 0)
 ```
+
+Raw-weight reference:
+
+```text
+raw_weight_reference = floor(validation_weight * fixed_epoch_reward / total_epoch_weight)
+```
+
+The raw-weight reference is useful for audit comparison, but it is not the
+preferred payout estimate because it can exceed the reward that chain settlement
+would have produced after normal effective-weight adjustments.
 
 Units and rounding:
 
@@ -241,7 +252,7 @@ check the case.
 - README with short summary and run instructions: present in this file.
 - Reproducible script or notebook: `scripts/fetch_case_data.py`, `scripts/analyze_case.py`.
 - Machine-readable output, preferably CSV and JSON: `artifacts/*.csv`, `artifacts/analysis_summary.json`.
-- Per-participant restitution table: preliminary exposure table in `artifacts/epoch_272_reported_and_claimed_zero_reward.csv`.
+- Per-participant restitution table: chain-like exposure table in `artifacts/epoch_272_reported_and_claimed_zero_reward.csv`.
 - List of excluded and manual-review cases: included in sections 6 and 11.
 - Narrative report with caveats: included in sections 2, 4, 5, and 8.
 - At least one raw-data sanity check: epoch 272 count checks are listed below.
@@ -279,12 +290,13 @@ Generated outputs:
 
 ## 10. Required Validator Checks
 
-- Re-run the calculation or independently reproduce the totals.
+- Re-run the calculation or independently reproduce the chain-like totals.
 - Independently analyze the devshard data and reach the same or clearly
   documented different conclusions.
 - Check the root cause against code, release, deployment, and retained devshard evidence.
 - Check inclusion and exclusion rules against raw data.
-- Spot-check the largest preliminary exposure: `gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4`.
+- Verify `chain_effective_weight` values from devshard / settlement data, then confirm that the same payout estimates are reached.
+- Spot-check the largest chain-like exposure: `gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4`.
 - Spot-check several smaller exposures, including `gonka1ce02...` and `gonka16xa2...`.
 - Spot-check excluded or manual-review cases with `claimed=false`.
 - Check formula, denominator, GNK conversion, units, and rounding.

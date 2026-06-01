@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 from decimal import Decimal, getcontext
 from pathlib import Path
 
@@ -20,6 +19,25 @@ REPORTED_ADDRESSES = {
     "gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv",
     "gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5",
     "gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n",
+}
+
+# Chain-like expected reward weights for epoch 272 zero-reward case rows.
+#
+# These are effective settlement weights after normal pre-downtime reward
+# adjustments. They are used to estimate what the chain would have paid if the
+# high miss-rate / downtime check had not zeroed the participant's reward.
+#
+# For gonka1wt8..., the value 21271 is independently reconciled to
+# 7,338.198912262 GNK:
+# floor(21271 * 283986676469990 / 823183).
+EPOCH_272_EFFECTIVE_WEIGHT_OVERRIDES = {
+    "gonka1wt8sr9jxzpec65j7zkxsgh6edk3m6r8nlf5za4": 21271,
+    "gonka10079cnl3nuh2k82mhkm04dj0slhtw9kmjewwau": 15146,
+    "gonka1007g0ut3u4wjkay9hegqfev4pj90qgexwskmcw": 18750,
+    "gonka1007dchuqgdnute4qam70kmn56j2vfw38mhyrqv": 18899,
+    "gonka15munkmx6x7k6rqqeexjet4556p7at39ks9qgr5": 10661,
+    "gonka1ce02jjduga8jvwj8jx39mxn0jr345vgkx7lk2n": 4307,
+    "gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s": 201,
 }
 
 
@@ -73,7 +91,14 @@ def analyze_epoch(raw_dir: Path, params: dict, epoch: int) -> tuple[dict, list[d
         baseline_reward = 0
         if total_weight > 0 and weight > 0:
             baseline_reward = (weight * fixed_reward) // total_weight
-        preliminary_exposure = max(baseline_reward - rewarded_coins, 0)
+        chain_effective_weight = None
+        if epoch == 272:
+            chain_effective_weight = EPOCH_272_EFFECTIVE_WEIGHT_OVERRIDES.get(addr)
+        chain_expected_reward = baseline_reward
+        if chain_effective_weight is not None and total_weight > 0:
+            chain_expected_reward = (chain_effective_weight * fixed_reward) // total_weight
+        preliminary_exposure = max(chain_expected_reward - rewarded_coins, 0)
+        raw_weight_exposure = max(baseline_reward - rewarded_coins, 0)
         zero_reward = rewarded_coins == 0
         claimed = bool(item["claimed"])
 
@@ -92,6 +117,11 @@ def analyze_epoch(raw_dir: Path, params: dict, epoch: int) -> tuple[dict, list[d
                 "total_epoch_weight": total_weight,
                 "fixed_epoch_reward": fixed_reward,
                 "baseline_reward_pre_downtime": baseline_reward,
+                "chain_effective_weight": (
+                    chain_effective_weight if chain_effective_weight is not None else weight
+                ),
+                "chain_expected_reward_pre_downtime": chain_expected_reward,
+                "raw_weight_exposure": raw_weight_exposure,
                 "preliminary_exposure": preliminary_exposure,
                 "zero_reward": zero_reward,
                 "zero_reward_claimed": zero_reward and claimed,
@@ -123,6 +153,12 @@ def analyze_epoch(raw_dir: Path, params: dict, epoch: int) -> tuple[dict, list[d
         ),
         "claimed_zero_reward_preliminary_exposure": sum(
             row["preliminary_exposure"] for row in rows if row["zero_reward_claimed"]
+        ),
+        "reported_raw_weight_exposure": sum(
+            row["raw_weight_exposure"] for row in rows if row["reported_address"]
+        ),
+        "claimed_zero_reward_raw_weight_exposure": sum(
+            row["raw_weight_exposure"] for row in rows if row["zero_reward_claimed"]
         ),
     }
     return aggregate, rows
@@ -183,6 +219,9 @@ def main() -> int:
         "total_epoch_weight",
         "fixed_epoch_reward",
         "baseline_reward_pre_downtime",
+        "chain_effective_weight",
+        "chain_expected_reward_pre_downtime",
+        "raw_weight_exposure",
         "preliminary_exposure",
         "zero_reward",
         "zero_reward_claimed",
@@ -210,6 +249,8 @@ def main() -> int:
             "total_epoch_weight",
             "reported_preliminary_exposure",
             "claimed_zero_reward_preliminary_exposure",
+            "reported_raw_weight_exposure",
+            "claimed_zero_reward_raw_weight_exposure",
         ],
     )
 
@@ -221,7 +262,8 @@ def main() -> int:
         "epoch_272_reported_and_claimed_zero_reward": interesting_rows,
         "notes": [
             "preliminary_exposure is not approved compensation",
-            "baseline_reward_pre_downtime is a technical exposure estimate",
+            "preliminary_exposure uses chain-like expected reward weights where available",
+            "raw_weight_exposure is retained as an upper technical reference",
             "root cause requires retained devshard proof/stat data",
         ],
     }
