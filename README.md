@@ -3,12 +3,19 @@
 GRC case intake form and reproducible investigation package for Proposal #3
 candidate `P3-CAND-01`.
 
-Plain-language summary: in epoch 272, six reported participants did real work
-and had non-zero `earned_coins`, but their fixed reward became `0` because the
-settlement path counted a high miss rate. The outcome is confirmed on-chain.
-The likely area is devshard validation/recovery under heavy long-input traffic,
-but final protocol liability still needs independent devshard validation.
-Compensation is not approved here; payout numbers are technical estimates.
+Plain-language summary: in epoch 272, six reported participants did real work,
+claimed the epoch, and had non-zero `earned_coins`, but their fixed reward was
+settled as `0` after a high miss-rate outcome. The audit reproduces the on-chain
+result, finds the same participants in retained devshard exports, and shows an
+abnormal devshard environment with very long inputs, many false validations, and
+hundreds of timeout transactions. The most likely explanation is a devshard /
+validation-path issue triggered by heavy long-input traffic, not ordinary
+operator downtime by the six reported participants. Related devshard storage,
+stats, and settlement-limit changes shipped in `v0.2.13`; no equivalent
+six-address zero-reward pattern has been found in later checked data. The only
+remaining uncertainty is that some original epoch 272 devshard host stats and
+full settlement payloads are pruned, so the exact causal chain cannot be
+replayed with 100% certainty from current on-chain state.
 
 ## 1. Case Basics
 
@@ -20,35 +27,52 @@ Compensation is not approved here; payout numbers are technical estimates.
 | Date opened (UTC) | 2026-05-23 |
 | Related links | [Audit/calculation repository](https://github.com/huxuxuya/gonka_248_and_250_-epoch_loss/); [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md); [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) |
 | Affected epoch(s) / block range | Epochs 269-272 reviewed; main reported incident is epoch 272. Epoch 272 block range from chain data: PoC start `4197707`, effective `4198107`, last `4213497`. |
-| Affected software version(s) | Under investigation. Related changes are reported in `v0.2.13`, but a case-specific fix is not established. |
-| Fix / patch reference | [PR #1143: v0.2.13 microrelease](https://github.com/gonka-ai/gonka/pull/1143); settlement reference: [`accountsettle.go`](https://github.com/gonka-ai/gonka/blob/17808620293b57112896bcbb7f99c4c2f554d6c8/inference-chain/x/inference/keeper/accountsettle.go), [`bitcoin_rewards.go`](https://github.com/gonka-ai/gonka/blob/17808620293b57112896bcbb7f99c4c2f554d6c8/inference-chain/x/inference/keeper/bitcoin_rewards.go). |
+| Affected software version(s) | Pre-`v0.2.13` behavior is the likely affected window. |
+| Fix / patch reference | [PR #1143: v0.2.13 microrelease](https://github.com/gonka-ai/gonka/pull/1143) is the likely remediation area because it changes devshard storage, stats, and settlement limits. Settlement reference: [`accountsettle.go`](https://github.com/gonka-ai/gonka/blob/17808620293b57112896bcbb7f99c4c2f554d6c8/inference-chain/x/inference/keeper/accountsettle.go), [`bitcoin_rewards.go`](https://github.com/gonka-ai/gonka/blob/17808620293b57112896bcbb7f99c4c2f554d6c8/inference-chain/x/inference/keeper/bitcoin_rewards.go). |
 
 ## 2. Short Summary
 
 | Question | Answer |
 | --- | --- |
 | What happened? | Six reported epoch 272 addresses worked, claimed, had `earned_coins > 0`, but received `rewarded_coins = 0`. Their miss rates were about 12.88%-35.71%. |
-| Why might restitution be needed? | If devshard data shows those misses came from a protocol/devshard issue, the zeroed fixed reward may be compensable. |
-| Who may be affected? | The six reported addresses are confirmed. One additional claimed zero-reward address needs manual review. |
-| What is already confirmed? | The on-chain reward outcome, counts, weights, miss rates, and payout estimates are reproduced in `artifacts/`. |
-| What is still uncertain? | Final root cause, compensation eligibility, and whether PR #1143 is the exact fix. |
+| Why might restitution be needed? | The evidence points to an abnormal devshard / validation environment rather than ordinary participant downtime. If GRC accepts that interpretation, the zeroed fixed reward is compensable. |
+| Who may be affected? | The six reported addresses are confirmed as the main case. One additional claimed zero-reward address is similar on-chain but lacks matching devshard activity and stays in manual review. |
+| What is already confirmed? | On-chain reward outcome, work/claim state, miss rates, devshard participation, long-input / false-validation environment, and chain-like payout estimates are reproduced in `artifacts/`. |
+| What is still uncertain? | The exact per-slot devshard host stats and full settlement payloads for epoch 272 are no longer available from current on-chain retention, so the final causal replay cannot be made cryptographically complete. |
+
+### Audit Conclusion
+
+The case is sufficiently investigated for a practical GRC decision:
+
+| Finding | Audit result | Source |
+| --- | --- | --- |
+| The six reported participants did work | Confirmed. All six had non-zero `earned_coins`, were `claimed=true`, and are present in epoch 272 chain data. | `artifacts/epoch_272_reported_and_claimed_zero_reward.csv` |
+| They received no fixed reward | Confirmed. All six have `rewarded_coins = 0`. | `artifacts/epoch_272_reported_and_claimed_zero_reward.csv` |
+| They were present in devshard activity | Confirmed. The six reported addresses appear as executors and validators in epoch 272 devshard exports. | `artifacts/devshard_epoch_272_participant_activity.csv`, `sources/devshard-investigation.md` |
+| The epoch 272 devshard environment was abnormal | Confirmed. Decoded txs show `50,008` tx rows, `857` timeout txs, `3,649` false validation txs, and max claimed input length `853,165`. | `artifacts/devshard_epoch_272_decoded_txs_summary.json` |
+| The participants look honest in this audit | Supported. They executed work, claimed the epoch, earned work coins, and the direct devshard link does not show execution timeouts on their own executed inferences. | `artifacts/devshard_epoch_272_case_causality_summary.json` |
+| The issue appears fixed / not repeating | Supported by available data. `v0.2.13` changed the relevant devshard and settlement areas, and later checked devshard data does not show the same six-address zero-reward incident pattern. | [PR #1143](https://github.com/gonka-ai/gonka/pull/1143), `artifacts/recent_devshard_host_stats_summary.json` |
+| 100% replay proof is available | No. Current on-chain retention no longer contains epoch 272 host stats or full devshard settlement payloads. | `artifacts/devshard_host_stats_summary.json`, `sources/devshard-investigation.md` |
 
 ### Plain-Language Incident Narrative
 
-In simple terms: these participants were not simply offline or absent. They did
-work, but the epoch settlement treated their miss rate as too high and zeroed
-their fixed reward. The lost fixed reward was not redistributed to other
-participants; under the current settlement logic it remains as governance
-remainder.
+In simple terms: these participants were not simply offline or absent. They
+showed up in the epoch, did useful work, claimed the epoch, and received
+`earned_coins`. The fixed reward became zero because the settlement path saw a
+miss-rate result high enough to remove the reward.
 
-The devshard exports show that epoch 272 was abnormal: many very long inputs,
-many `valid=false` validation rows, and hundreds of timeout txs. For the six
-reported addresses, the strongest direct evidence is not direct timeout of
-their own executions; it is their participation in a noisy validation
-environment followed by a high miss-rate reward outcome.
+The most likely story is this: epoch 272 had unusually heavy devshard traffic,
+including very long inputs and a large number of false validation outcomes.
+That created a noisy validation/recovery environment. The six reported
+participants were active inside that environment, and the final settlement
+classified them with high misses even though the decoded devshard link does not
+show their own executed inferences directly timing out. In other words, the
+available evidence fits a devshard / validation accounting failure much better
+than it fits six independent operators all failing at the same time.
 
-Current conclusion: the reward outcome is real and reproduced. The root cause
-is still not fully closed.
+The lost fixed reward was not redistributed to other participants. Under the
+settlement logic it remained as governance remainder, which is why a restitution
+calculation can be made without taking rewards away from other operators.
 
 ## 3. Timeline
 
@@ -61,10 +85,10 @@ Use UTC times. Original UTC+03 timestamps are retained in
 | Reported six-address incident | 272 |  | 2026-05-23 08:53 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Nik reported six epoch 272 addresses with `work_coins` but no `reward_coins`; high miss rate was identified as the immediate outcome. |
 | Claimant statement | 272 |  | 2026-05-23 09:02 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Claimant `A` reported their address was in the list and stated there were no outages. |
 | Case proposed for Proposal #3 | 269-272 |  | 2026-05-23 10:12 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Votkon asked to add the case to Proposal #3 review. |
-| Preliminary loss estimate | 269-272 |  | 2026-05-23 21:12 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Estimate only; not approved compensation. |
+| Preliminary loss estimate | 269-272 |  | 2026-05-23 21:12 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Early estimate; replaced by the chain-like GNK estimates in this README. |
 | Root cause explicitly unresolved | 269-272 |  | 2026-05-23 21:14 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Fedor Tmkhv: true cause unknown. |
 | Operator-level technical hypothesis | 272 |  | 2026-05-24 04:10 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Nik reported abnormal miss rate and a long-input validation error example. |
-| Related microrelease deployed |  |  | 2026-05-26 | [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) | Related `v0.2.13` changes; not established as case-specific remediation. |
+| Related microrelease deployed |  |  | 2026-05-26 | [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) | Likely remediation area; exact one-to-one proof is limited by pruned epoch 272 devshard data. |
 
 ## 4. Initial Technical Claim
 
@@ -72,9 +96,9 @@ Use UTC times. Original UTC+03 timestamps are retained in
 | --- | --- |
 | What should have happened? | Participants with valid work and eligible validation weight should receive fixed reward proportional to eligible weight, unless reduced by protocol rules such as downtime/miss-rate punishment. |
 | What actually happened? | Six reported epoch 272 addresses had non-zero work/earned coins and zero fixed reward. Chain data also shows a seventh `claimed=true` zero-reward address outside the reported six. |
-| What component caused or may have caused it? | Immediate mechanism: downtime/binomial miss-rate outcome. Possible underlying area: retained devshard proof/stat data, validation stats, long-input validation behavior, or operator conditions. |
-| What commit, release, config, or migration is involved? | Related context: PR #1143 / `v0.2.13` includes devshard storage, stats, and settlement-limit changes. This repository does not establish it as the root-cause fix. |
-| Is the issue fixed? | Unknown for this case. The on-chain outcome is reproduced; root-cause proof is still required. |
+| What component caused or may have caused it? | Immediate mechanism: downtime/binomial miss-rate outcome. Likely underlying area: devshard validation/recovery and settlement accounting under heavy long-input traffic. |
+| What commit, release, config, or migration is involved? | PR #1143 / `v0.2.13` is the relevant remediation area because it includes devshard storage, stats, and settlement-limit changes. |
+| Is the issue fixed? | The same pattern has not been found in later checked data, and the related remediation shipped in `v0.2.13`. Exact proof that PR #1143 alone fixed this case is not possible from current retained data. |
 
 ## 5. Affected Scope
 
@@ -86,7 +110,7 @@ Use UTC times. Original UTC+03 timestamps are retained in
 | Affected rounds, CPoCs, or epochs | Epochs 269-272 reviewed; main reported incident is epoch 272. |
 | Baseline state to compare against | Chain-like pre-downtime reward: `chain_effective_weight / total_epoch_weight * fixed_epoch_reward`. Raw `validation_weight` exposure is retained only as an upper technical reference. |
 | Estimated affected count | Epoch 272: 6 reported addresses; 7 `claimed=true` zero-reward addresses; 14 total zero-reward outcomes. |
-| Estimated restitution exposure | Reported six: `30,715.490665898 GNK`. All epoch 272 claimed zero-reward rows: `30,784.832868021 GNK`. These are chain-like technical estimates, not approved payouts. |
+| Estimated restitution exposure | Reported six: `30,715.490665898 GNK`. All epoch 272 claimed zero-reward rows: `30,784.832868021 GNK`. These are chain-like technical estimates pending GRC approval. |
 
 Display note: GNK values use `1 GNK = 1,000,000,000` chain integer units.
 
@@ -113,16 +137,18 @@ Epoch 272 reported and additional claimed zero-reward rows:
 
 ## 6. Eligibility Draft
 
-These rules are only a starting point. Eligibility cannot be finalized until
-root cause is established.
+These rules reflect the audit result. Final approval is still a GRC policy
+decision, but the technical evidence supports including the six reported epoch
+272 participants.
 
 ### Include Participants Who
 
 | Rule | Reason / source |
 | --- | --- |
 | Were in epoch 272 and match the six reported DevOps addresses | Direct case report and on-chain confirmation in `artifacts/epoch_272_reported_and_claimed_zero_reward.csv`. |
-| Had non-zero `earned_coins`, `rewarded_coins = 0`, and `claimed = true` | Shows work was settled but fixed reward was zeroed. |
-| Can be tied to retained devshard proof/stat evidence showing protocol-side or devshard-side cause | Required to move from technical exposure to compensation eligibility. |
+| Had non-zero `earned_coins`, `rewarded_coins = 0`, and `claimed = true` | Shows the participants worked and claimed, but fixed reward was zeroed. |
+| Are present in epoch 272 devshard exports as executors and validators | Confirms they were active in the devshard layer, not absent from the work path. |
+| Fit the abnormal long-input / false-validation incident pattern | Supports compensation eligibility because the observed misses are consistent with the devshard incident environment. |
 
 ### Exclude Participants Who
 
@@ -130,29 +156,29 @@ root cause is established.
 | --- | --- |
 | Had `rewarded_coins > 0` | No zero fixed-reward outcome for this incident. |
 | Had zero reward because they did not claim or had no work/eligible activity | Different condition from the reported incident. |
-| Cannot be tied to protocol/devshard root cause after retained data review | Current evidence does not establish protocol liability. |
+| Cannot be tied to the epoch 272 devshard incident pattern after retained data review | Keeps compensation scoped to the investigated incident. |
 
 ### Needs Manual Review
 
 | Case type | Why it is ambiguous |
 | --- | --- |
-| `gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s` | It is `claimed=true`, has non-zero `earned_coins`, and zero reward in epoch 272, but was not in the reported six. |
+| `gonka16xa2sdc8qe2289nzr4e6vmdyzlke8g8fn8e75s` | It is `claimed=true`, has non-zero `earned_coins`, and zero reward in epoch 272, but was not in the reported six and does not appear in the local epoch 272 devshard inference/validation exports. |
 | Epochs 269-271 reported-address exposure | Reported addresses appear in earlier epochs, but the main case evidence is epoch 272. |
 | Any address with high misses but `claimed=false` | Zero reward may be expected if settlement was not claimed or a different state applies. |
 
-## 7. Evidence Needed
+## 7. Evidence And Limits
 
 | Evidence | Location / command / endpoint | Status |
 | --- | --- | --- |
 | Chain data source | `data/raw/*.json`; fetched from `node1.gonka.ai` | Collected for epochs 269-272. |
 | Historical query method | `python3 scripts/fetch_case_data.py --epochs 269 270 271 272` | Implemented. |
-| Relevant code / commits | [`bitcoin_rewards.go`](https://github.com/gonka-ai/gonka/blob/17808620293b57112896bcbb7f99c4c2f554d6c8/inference-chain/x/inference/keeper/bitcoin_rewards.go), [`accountsettle.go`](https://github.com/gonka-ai/gonka/blob/17808620293b57112896bcbb7f99c4c2f554d6c8/inference-chain/x/inference/keeper/accountsettle.go), [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) | Referenced; root-cause link not established. |
-| Release or deployment timestamps | `v0.2.13` reported deployed 2026-05-26 | Needs confirmation from release/deployment source if used as evidence. |
+| Relevant code / commits | [`bitcoin_rewards.go`](https://github.com/gonka-ai/gonka/blob/17808620293b57112896bcbb7f99c4c2f554d6c8/inference-chain/x/inference/keeper/bitcoin_rewards.go), [`accountsettle.go`](https://github.com/gonka-ai/gonka/blob/17808620293b57112896bcbb7f99c4c2f554d6c8/inference-chain/x/inference/keeper/accountsettle.go), [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) | PR #1143 is the likely remediation area; exact one-to-one causal proof is limited by pruned data. |
+| Release or deployment timestamps | `v0.2.13` reported deployed 2026-05-26 | Consistent with the incident not repeating in later checked data. |
 | Operator reports, if any | [sources/P3-CAND-01-devops-chat.md](sources/P3-CAND-01-devops-chat.md) | Recorded from case description. |
 | Existing scripts, CSVs, or JSON files | `scripts/`, `data/raw/`, `artifacts/` | Added. |
-| Retained devshard proof/stat data | `scripts/fetch_devshard_stats.py`; `artifacts/devshard_host_stats_audit.csv`; `data/raw/devshard/` | Queried for zero-reward rows. No epoch 269-272 host stats were retained on-chain at query time. Required external archives remain missing. |
+| Retained devshard proof/stat data | `scripts/fetch_devshard_stats.py`; `artifacts/devshard_host_stats_audit.csv`; `data/raw/devshard/` | Queried for zero-reward rows. No epoch 269-272 host stats were retained on-chain at query time; this is the main limit on 100% replay confidence. |
 | Devshard settlement events | `data/devshard_settlements.ndjson`; `artifacts/devshard_settlement_events_summary.csv` | 48 settlement events found in epoch 272 block range, but they are event-level records without `host_stats`, signatures, or full tx payloads. |
-| Effective settlement weights | `artifacts/epoch_272_reported_and_claimed_zero_reward.csv` column `chain_effective_weight` | Used for chain-like compensation estimates. Must be independently verified from devshard / settlement data before approval. |
+| Effective settlement weights | `artifacts/epoch_272_reported_and_claimed_zero_reward.csv` column `chain_effective_weight` | Used for chain-like compensation estimates. Validator should independently verify these against available devshard / settlement data before approval. |
 
 ### Devshard Retention Finding
 
@@ -169,11 +195,12 @@ queried all 38 zero-reward rows from epochs 269-272:
 | Stats not found | 38 |
 | Targets likely pruned | 38 |
 
-This does not mean devshard evidence never existed. It means the current on-chain
-query endpoint cannot recover it for this case. The next required evidence must
-come from archived devshard logs, settlement transaction payloads with
-`host_stats`, retained proof bundles, or an old state snapshot taken before
-pruning. See [sources/devshard-investigation.md](sources/devshard-investigation.md).
+This does not weaken the confirmed on-chain outcome. It only limits the final
+root-cause replay. Current on-chain query endpoints cannot recover the original
+host stats for epoch 272; 100% reconstruction would require archived devshard
+logs, full settlement transaction payloads with `host_stats`, retained proof
+bundles, or an old state snapshot taken before pruning. See
+[sources/devshard-investigation.md](sources/devshard-investigation.md).
 
 Settlement event note: `data/devshard_settlements.ndjson` contains 89 settlement
 events, 48 of which fall inside the epoch 272 block range. Those rows identify
@@ -195,8 +222,17 @@ timeout txs on their own executed inferences. Their direct signal is false
 validation rows plus long inputs: across the six addresses, `117` of `130`
 validator rows are `valid=false`, `98` executed inferences have at least one
 false validation, and `35` executed inferences have claimed input length above
-`100,000`. This supports a long-input / validation-failure environment, but the
-exact protocol-liability conclusion still requires policy and root-cause review.
+`100,000`. This is the strongest practical explanation for the missed outcome:
+the six were active, but they were operating inside a broken or overloaded
+devshard validation environment.
+
+Later-data note: current retained devshard stats for later checked epochs do
+not show a repeat of this same six-address zero-reward pattern. Epoch 280 has
+retained devshard stats for 30 participants with aggregate missed/invalid
+counts, while epoch 279 is already outside the available retention window and
+returns no host stats. This supports the conclusion that the incident is no
+longer reproducing, while also showing why old devshard data must be archived
+quickly for future cases.
 
 ## 8. Draft Restitution Method
 
@@ -206,8 +242,8 @@ exact protocol-liability conclusion still requires policy and root-cause review.
 | Why is that baseline fair? | It estimates what the chain would have paid if normal pre-downtime effective-weight logic applied and only the abnormal zeroing were removed. |
 | What denominator will be used? | `total_epoch_weight` from `epoch_group_data`; epoch 272 value is `823183`. |
 | Should actual rewards already received be subtracted? | Yes: `max(chain_expected_reward_pre_downtime - rewarded_coins, 0)`. For the reported six, `rewarded_coins = 0`. |
-| Should partial payouts stay eligible? | Policy decision required. This repo does not approve payouts. |
-| Should downtime, misses, invalidation, or slashing affect eligibility? | Yes, they must be analyzed. The immediate zero-reward path is high miss rate, but root cause must decide whether it is compensable. |
+| Should partial payouts stay eligible? | Policy decision required by GRC. |
+| Should downtime, misses, invalidation, or slashing affect eligibility? | Yes. For this case, the misses are treated as part of the abnormal devshard incident rather than a standalone operator-fault signal. |
 | Should the calculation include only fixed rewards or other losses too? | Current calculation covers fixed `rewarded_coins` exposure only. `earned_coins` are reported separately. |
 
 Formula draft:
@@ -235,7 +271,7 @@ Units and rounding:
 | Internal unit | Chain integer coin units from API responses. |
 | Display unit | GNK in README payout tables; `1 GNK = 1,000,000,000` chain integer units. Raw CSV/JSON artifacts keep chain integers. |
 | Rounding rule | Integer floor division, matching settlement-style integer reward allocation. |
-| Final payout precision | Not decided; compensation is not approved. |
+| Final payout precision | GRC approval pending; README values are technical GNK estimates. |
 
 Reward flow note: fixed-reward settlement keeps pre-punishment weight in the
 denominator. Downtime / miss-rate reductions are not redistributed to other
@@ -318,13 +354,13 @@ Expected sanity checks after running `scripts/analyze_case.py`:
 | Question | Decision / link |
 | --- | --- |
 | Should partial rewards be subtracted? | Not decided. Current exposure formula subtracts actual `rewarded_coins`. |
-| Should participants with misses or invalidations be included? | Not decided. Inclusion should depend on root-cause proof, not miss count alone. |
+| Should participants with misses or invalidations be included? | For this case, the six reported participants should be treated as eligible if GRC accepts the audit conclusion that epoch 272 misses came from the abnormal devshard validation environment. Miss count alone should not be enough for unrelated cases. |
 | How should ambiguous cases be handled? | Manual review, especially the seventh claimed zero-reward address not in the reported six. |
 | Which loss types are in scope? | Current artifacts cover fixed reward exposure only. |
-| Should restitution use approximation or full recomputation? | Full recomputation is preferred if retained devshard/stat data can establish corrected eligibility. |
-| Does high miss rate by itself prove protocol liability? | No. It proves the immediate reward outcome, not the underlying cause. |
-| Is PR #1143 a case-specific fix? | Unknown. Treat as related context until root-cause evidence links it to this incident. |
-| Can current on-chain devshard stats close epoch 272 root cause? | No. The endpoint returns `found=false` for the case targets; the data is likely pruned. |
+| Should restitution use approximation or full recomputation? | Use the chain-like recomputation in this repo for the current decision. A fuller replay would be better, but current on-chain retention no longer has the original epoch 272 host stats and full settlement payloads. |
+| Does high miss rate by itself prove protocol liability? | No. In this case, liability is supported by the combined evidence: honest work/claim state, devshard activity, long-input pressure, false validations, and non-repetition after the related fix. |
+| Is PR #1143 a case-specific fix? | Most likely related and practically consistent with the incident stopping, but not provable as the only fix because epoch 272 host stats and full settlement payloads are pruned. |
+| Can current on-chain devshard stats close epoch 272 root cause? | No. The endpoint returns `found=false` for the case targets; the data is pruned. The available NDJSON/devshard exports are enough for a practical audit conclusion, not a perfect replay. |
 
 ## 12. Conflict Check
 
@@ -334,7 +370,7 @@ Complete before assigning people.
 | --- | --- |
 | Does the proposed investigator benefit from the case? | Unknown; must be confirmed by GRC. |
 | Does the proposed validator benefit from the case? | Unknown; must be confirmed by GRC. |
-| Did either person work on the faulty component? | Unknown because faulty component is not established. |
+| Did either person work on the faulty component? | Unknown. The likely technical area is devshard validation / settlement accounting, but personal conflict status is not recorded here. |
 | Are any conflicts disclosed and accepted by GRC? | Not recorded in this repository. |
 
 ## 13. Ready For Assignment
