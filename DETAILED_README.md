@@ -82,13 +82,18 @@ Use UTC times. Original UTC+03 timestamps are retained in
 | Event | Epoch | Block | Time (UTC) | Source / link | Notes |
 | --- | --- | --- | --- | --- | --- |
 | Issue starts / suspected affected window begins | 269 |  | 2026-05-23 | User-provided case description | Epochs 269-272 were included in preliminary review. |
+| Epoch 272 PoC start block | 272 | 4197707 | 2026-05-22 09:32:39 | Chain block query: `/cosmos/base/tendermint/v1beta1/blocks/4197707` | Start boundary for the main incident epoch. |
+| Epoch 272 effective block | 272 | 4198107 | 2026-05-22 10:07:37 | Chain block query: `/cosmos/base/tendermint/v1beta1/blocks/4198107` | Epoch 272 became effective. |
+| Epoch 272 devshard settlements observed | 272 | 4213209-4213251 | 2026-05-23 08:03:35-08:07:14 | `artifacts/devshard_settlement_events_tagged.csv` | 48 settlement events in the epoch 272 block range. |
+| Epoch 272 last block in chain data | 272 | 4213497 | 2026-05-23 08:28:48 | Chain block query: `/cosmos/base/tendermint/v1beta1/blocks/4213497` | End boundary used for this investigation. |
 | Reported six-address incident | 272 |  | 2026-05-23 08:53 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Nik reported six epoch 272 addresses with `work_coins` but no `reward_coins`; high miss rate was identified as the immediate outcome. |
 | Claimant statement | 272 |  | 2026-05-23 09:02 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Claimant `A` reported their address was in the list and stated there were no outages. |
 | Case proposed for Proposal #3 | 269-272 |  | 2026-05-23 10:12 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Votkon asked to add the case to Proposal #3 review. |
 | Preliminary loss estimate | 269-272 |  | 2026-05-23 21:12 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Early estimate; replaced by the chain-like GNK estimates in this README. |
 | Root cause explicitly unresolved | 269-272 |  | 2026-05-23 21:14 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Fedor Tmkhv: true cause unknown. |
 | Operator-level technical hypothesis | 272 |  | 2026-05-24 04:10 | [DevOps chat evidence](sources/P3-CAND-01-devops-chat.md) | Nik reported abnormal miss rate and a long-input validation error example. |
-| Related microrelease deployed |  |  | 2026-05-26 | [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) | Likely remediation area; exact one-to-one proof is limited by pruned epoch 272 devshard data. |
+| `v0.2.13` applied on-chain |  | 4267300 | 2026-05-26 14:39:41 | Chain upgrade query: `/cosmos/upgrade/v1beta1/applied_plan/v0.2.13` | Chain reports applied plan height `4267300`; block timestamp confirms when the upgrade took effect on-chain. |
+| PR #1143 merged |  |  | 2026-05-26 18:59:21 | [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) | GitHub merge for `v0.2.13` microrelease; likely remediation area. |
 
 ## 4. Initial Technical Claim
 

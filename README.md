@@ -8,7 +8,7 @@
 | Estimated compensation | Reported six: `30,715.490665898 GNK`. All epoch 272 claimed zero-reward rows: `30,784.832868021 GNK`. |
 | **Cause and evidence** | Most likely devshard / validation accounting failure under heavy long-input traffic. Evidence: [detailed report](DETAILED_README.md), [devshard notes](sources/devshard-investigation.md), [case table](artifacts/epoch_272_reported_and_claimed_zero_reward.csv), [decoded tx summary](artifacts/devshard_epoch_272_decoded_txs_summary.json). |
 | **Can it happen again?** | No known repeat path in checked epochs `273-280`; the same `claimed=true` + zero fixed reward pattern did not recur for reported addresses. |
-| **Mitigation / fix** | Likely related fix area: [`v0.2.13` / PR #1143](https://github.com/gonka-ai/gonka/pull/1143), which changed devshard storage, stats, and settlement limits. Exact one-to-one proof is limited by pruned epoch 272 data. |
+| **Mitigation / fix** | Likely related fix area: `v0.2.13`, applied on-chain at height `4267300` on `2026-05-26 14:39:41 UTC`; [PR #1143](https://github.com/gonka-ai/gonka/pull/1143) merged at `2026-05-26 18:59:21 UTC`. Exact one-to-one proof is limited by pruned epoch 272 data. |
 | **Compensation overlap** | No known overlap. This calculation covers fixed `rewarded_coins` exposure only. |
 | **Current decision** | GRC should decide whether to approve compensation for the six confirmed addresses using the chain-like estimate below. |
 | **Review focus** | Validator: `@mikenosov`. Check devshard evidence, `chain_effective_weight`, GNK conversion, and that the post-272 pattern did not recur. |
@@ -70,6 +70,20 @@ remaining limit is root-cause replay: current on-chain retention no longer has
 epoch 272 devshard host stats or full settlement payloads with `host_stats`,
 signatures, `state_root`, and `rest_hash`. That prevents 100% replay proof, but
 does not change the confirmed on-chain reward outcome.
+
+## Why v0.2.13 Likely Helped
+
+The strongest relevant fixes in PR #1143 are the devshard ones:
+
+| v0.2.13 change | Why it likely helped this case |
+|---|---|
+| Devshard validation and recovery edge-case fixes | Best match for the observed false-validation / missed-result behavior. |
+| Devshard escrow nonce limit raised from `20,000` to `1,000,000` | Reduces the chance that a busy devshard epoch hits settlement limits. |
+| `MaxEscrowsPerEpoch` raised to `500,000` | Gives settlement more room under high request volume. |
+
+These are the most likely reasons the same pattern is not seen again after
+epoch 272. Exact proof is limited because epoch 272 host stats and full
+settlement payloads are pruned.
 
 ## Files
 
